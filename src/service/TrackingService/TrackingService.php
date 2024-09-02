@@ -18,10 +18,10 @@ class TrackingService extends AbstractService
 {
     
     /* Version */
-    const VERSION = 3.1;
+    const VERSION = '3.0';
     
     /* Service URL */
-    const URL = 'https://express.tnt.com/expressconnect/track.do';
+    const URL = 'https://www.mytnt.it/XMLServices';
     
     /* Market types */
     const M_ITL = 'INTERNATIONAL';
@@ -94,17 +94,18 @@ class TrackingService extends AbstractService
      */
     public function searchByConsignment(array $consignments)
     {
-        
+
         $this->xml->flush();
-        
+
         $this->startDocument();
-            
+
         foreach ($consignments as $consignment) {
-            $this->xml->writeElement('ConsignmentNumber', $consignment);
+            $this->xml->writeElement('ConNo', $consignment);
         }
-                
+
+        $this->xml->endElement();
         $this->endDocument();
-            
+
         return new TrackingResponse($this->sendRequest(), $this->getXmlContent());
     }
     
@@ -157,31 +158,7 @@ class TrackingService extends AbstractService
             
         return new TrackingResponse($this->sendRequest(), $this->getXmlContent());
     }
-    
-    /**
-     * Set market type DOMESTIC
-     *
-     * @return TrackingService
-     */
-    public function setMarketTypeDomestic()
-    {
-        
-        $this->marketType = TrackingService::M_DST;
-        return $this;
-    }
 
-    /**
-     * Set market type INTERNATIONAL
-     *
-     * @return TrackingService
-     */
-    public function setMarketTypeInternational()
-    {
-        
-        $this->marketType = TrackingService::M_ITL;
-        return $this;
-    }
-    
     /**
      * Set locale - translate attempt.
      * Will attempt to translate status description in to relevant local language.
@@ -220,16 +197,21 @@ class TrackingService extends AbstractService
      */
     protected function startDocument()
     {
-        
         parent::startDocument();
-        
-        $this->xml->startElement("TrackRequest");
-        $this->xml->writeAttribute('locale', $this->locale);
-        $this->xml->writeAttribute('version', self::VERSION);
+
+        $this->xml->startElement('Document');
+        $this->xml->startElement("Application");
+        $this->xml->writeElement('Version', self::VERSION);
+        $this->xml->startElement('Login');
+            $this->xml->writeElement('Customer', $this->account);
+            $this->xml->writeElement('User', $this->userId);
+            $this->xml->writeElement('Password', $this->password);
+            $this->xml->writeElement('LangID', $this->accountCountryCode);
+        $this->xml->endElement();
+
         $this->xml->startElement("SearchCriteria");
-        $this->setMarketTypeAttributes();
     }
-    
+
     /**
      * End document
      *
@@ -237,14 +219,12 @@ class TrackingService extends AbstractService
      */
     protected function endDocument()
     {
-        
         $this->xml->endElement();
-        $this->xml->writeRaw($this->setLevelOfDetails()->getXml());
         $this->xml->endElement();
-        
+
         parent::endDocument();
     }
-    
+
     /**
      * Send request
      *
@@ -301,21 +281,7 @@ class TrackingService extends AbstractService
             $this->xml->endElement();
         }
     }
-    
-    /**
-     * Set market type attributes for search criteria
-     *
-     * @return void
-     */
-    private function setMarketTypeAttributes()
-    {
-        
-        if (empty($this->marketType) === false) {
-            $this->xml->writeAttribute('marketType', $this->marketType);
-            $this->xml->writeAttribute('originCountry', $this->originCountryCode);
-        }
-    }
- 
+
     /**
      * Continue requesting TNT for more consignment - pagination
      *

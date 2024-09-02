@@ -20,21 +20,16 @@ abstract class AbstractShippingResponse extends AbstractResponse
      */
     protected function catchRuntimeErrors()
     {
-        
-        if (isset($this->simpleXml->error_reason) === true) {
+        if (isset($this->simpleXml->Incomplete) === true && isset($this->simpleXml->Incomplete->RuntimeError) === true) {
             $this->hasError = true;
-            $this->errors[] = $this->simpleXml->error_reason->__toString();
-                        
-            if (isset($this->simpleXml->error_line) === true) {
-                $this->errors[] = "Line: {$this->simpleXml->error_line}";
-            }
-            
-            if (empty($this->simpleXml->error_srcText->__toString()) === false) {
-                $this->errors[] = $this->simpleXml->error_srcText->__toString();
-            }
+
+            $error['CODE'] = $this->simpleXml->Incomplete->RuntimeError->Code;
+            $error['DESC'] = $this->simpleXml->Incomplete->RuntimeError->Message;
+
+            array_push($this->errors, $error);
         }
     }
-    
+
     /**
      * Catch validation errors
      *

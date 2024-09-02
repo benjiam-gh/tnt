@@ -34,7 +34,7 @@ abstract class AbstractService
      *
      * @var string
      */
-    protected $accountCountryCode = 'GB';
+    protected $accountCountryCode = 'IT';
     
     /**
      * Origin (destination) country code
@@ -63,7 +63,14 @@ abstract class AbstractService
      * @var bool
      */
     private $verifySSL = true;
-    
+
+    /**
+     * Codice cliente fornito da TNT
+     *
+     * @var string
+     */
+    protected $senderAccId;
+
     /**
      * Get TNT service URL
      *
@@ -91,7 +98,6 @@ abstract class AbstractService
         
         $this->userId = $userId;
         $this->password = $password;
-        $this->initXml();
     }
     
     /**
@@ -105,7 +111,7 @@ abstract class AbstractService
         $this->xml->openMemory();
         $this->xml->setIndent(true);
     }
-           
+
     /**
      * Set account number.
      * Will be provided by your TNT representative.
@@ -158,7 +164,19 @@ abstract class AbstractService
         $this->verifySSL = false;
         return $this;
     }
-    
+
+    /**
+     * Set Codice cliente fornito da TNT
+     *
+     * @param string $countryCode
+     * @return AbstractService
+     */
+    public function setSenderAccId($senderAccId)
+    {
+        $this->senderAccId = $senderAccId;
+        return $this;
+    }
+
     /**
      * Build/start document
      *
@@ -167,7 +185,7 @@ abstract class AbstractService
     protected function startDocument()
     {
         
-        $this->xml->startDocument('1.0', 'UTF-8', 'no');
+        $this->xml->startDocument('1.0', 'UTF-8');
     }
     
     /**
@@ -194,7 +212,7 @@ abstract class AbstractService
         $this->xml->flush();
         return $this->xml->writeRaw($xml);
     }
-    
+
     /**
      * Get XML content
      *
@@ -202,16 +220,15 @@ abstract class AbstractService
      */
     protected function getXmlContent()
     {
-        
         return trim($this->xml->flush(false));
     }
-    
+
     /**
      * Send request
      *
      * @return string Returns TNT Response string as XML
      */
-    protected function sendRequest()
+    protected function sendRequest($xmlContent)
     {
         
         $headers[] = "Content-type: application/x-www-form-urlencoded";
@@ -221,15 +238,15 @@ abstract class AbstractService
                 'http' => array(
                     'header' => $headers,
                     'method' => 'POST',
-                    'content' => $this->buildHttpPostData()
+                    'content' => $this->buildHttpPostData($xmlContent)
                 ),
                 'ssl' => array(
                      'verify_peer' => $this->verifySSL,
                      'verify_peer_name' => $this->verifySSL)
                 ));
-        
+
         $output = @file_get_contents($this->getServiceUrl(), false, $context);
-        
+
         // $http_response_header comes from PHP engine,
         // it's not a part of this code
         // http://php.net/manual/en/reserved.variables.httpresponseheader.php
@@ -245,10 +262,10 @@ abstract class AbstractService
      *
      * @return string
      */
-    private function buildHttpPostData()
+    private function buildHttpPostData($xmlContent)
     {
         
-        $post = http_build_query(array('xml_in' => $this->getXmlContent()));
+        $post = http_build_query(array('xmlin' => $xmlContent));
         return $post;
     }
 }

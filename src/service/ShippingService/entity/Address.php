@@ -85,7 +85,18 @@ class Address extends AbstractXml
      * @var string
      */
     private $accountCountry;
-    
+
+    /**
+     * @var string
+     */
+    private $addressType;
+
+	function __construct($addressType) {
+		parent::__construct();
+		$this->addressType = $addressType;
+        $this->xml->writeElementCData('addressType', $addressType);
+	}
+
     /**
      * Get company name
      *
@@ -228,7 +239,7 @@ class Address extends AbstractXml
         
         if (empty($company) === false) {
             $this->company = $company;
-            $this->xml->writeElementCData('COMPANYNAME', $company);
+            $this->xml->writeElementCData('name', $company);
         }
         
         return $this;
@@ -248,7 +259,7 @@ class Address extends AbstractXml
         if (empty($address) === false && count($this->address) < 3) {
             $this->address[] = $address;
             $lineNo = count($this->address);
-            $this->xml->writeElementCData("STREETADDRESS" . $lineNo, $address);
+            $this->xml->writeElementCData("addrline" . $lineNo, $address);
         }
         
         return $this;
@@ -265,7 +276,7 @@ class Address extends AbstractXml
         
         if (empty($city) === false) {
             $this->city = $city;
-            $this->xml->writeElementCData('CITY', $city);
+            $this->xml->writeElementCData('town', $city);
         }
         
         return $this;
@@ -282,7 +293,7 @@ class Address extends AbstractXml
         
         if (empty($province) === false) {
             $this->province = $province;
-            $this->xml->writeElementCData('PROVINCE', $province);
+            $this->xml->writeElementCData('province', $province);
         }
         
         return $this;
@@ -299,7 +310,7 @@ class Address extends AbstractXml
         
         if (empty($postcode) === false) {
             $this->postcode = $postcode;
-            $this->xml->writeElementCData('POSTCODE', $postcode);
+            $this->xml->writeElementCData('postcode', $postcode);
         }
         
         return $this;
@@ -316,7 +327,7 @@ class Address extends AbstractXml
         
         if (empty($country) === false) {
             $this->country = $country;
-            $this->xml->writeElementCData('COUNTRY', $country);
+            $this->xml->writeElementCData('country', $country);
             
             // automatically add account number
             // it has to be exactly in this place
@@ -373,7 +384,7 @@ class Address extends AbstractXml
         
         if (empty($contactDialCode) === false) {
             $this->contactDialCode = $contactDialCode;
-            $this->xml->writeElementCData('CONTACTDIALCODE', $contactDialCode);
+            $this->xml->writeElementCData('phone1', $contactDialCode);
         }
         
         return $this;
@@ -390,7 +401,7 @@ class Address extends AbstractXml
         
         if (empty($contactPhone) === false) {
             $this->contactPhone = $contactPhone;
-            $this->xml->writeElementCData('CONTACTTELEPHONE', $contactPhone);
+            $this->xml->writeElementCData('phone2', $contactPhone);
         }
         
         return $this;
@@ -407,7 +418,7 @@ class Address extends AbstractXml
         
         if (empty($email) === false) {
             $this->email = $email;
-            $this->xml->writeElementCData('CONTACTEMAIL', $email);
+            $this->xml->writeElementCData('email', $email);
         }
         
         return $this;

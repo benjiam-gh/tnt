@@ -23,6 +23,13 @@ class Consignment extends AbstractXml
      * @var string
      */
     private $conNumber;
+
+    /**
+     * Sender address
+     *
+     * @var Address
+     */
+    private $sender;
     
     /**
      * Receiver address
@@ -49,8 +56,24 @@ class Consignment extends AbstractXml
      *
      * @var string
      */
-    private $contype = 'N';
-    
+    private $contype = 'T';
+
+    /**
+     * Package type.
+     * C= Colli S= Buste B=Bauletti piccoli D= Bauletti grandi
+     *
+     * @var string
+     */
+    private $packagetype = 'C';
+
+    /**
+     * Division
+     *
+     *
+     * @var string
+     */
+    private $division = 'D';
+
     /**
      * S - sender, R - receiver
      *
@@ -72,7 +95,12 @@ class Consignment extends AbstractXml
      * @var float
      */
     private $totalVolume = 0.00;
-    
+
+    /**
+     * @var string
+     */
+    private $collectionDate;
+
     /**
      * @var string
      */
@@ -81,7 +109,7 @@ class Consignment extends AbstractXml
     /**
      * @var float
      */
-    private $goodsValue = 0.00;
+    private $goodsValue = null;
     
     /**
      * @var float
@@ -128,7 +156,13 @@ class Consignment extends AbstractXml
      * @var array
      */
     private $account = [];
-    
+
+    /**
+     * @var string
+     */
+    private $conAction = 'I';
+
+
     /**
      * Set account
      *
@@ -151,32 +185,40 @@ class Consignment extends AbstractXml
      */
     public function getAsXml()
     {
-                    
         $xml = new MyXMLWriter();
         $xml->openMemory();
         $xml->setIndent(true);
 
-        $xml->writeElement('CONREF', $this->conReference);
-        $xml->startElement('DETAILS');
+        // copy this XML into new document
+        $xml->writeRaw(parent::getAsXml());
 
-            // merge addresses into new document
-            $this->mergeReceiverAddress($xml);
-            $this->mergeDeliveryAddress($xml);
-        
-            // copy this XML into new document
-            $xml->writeRaw(parent::getAsXml());
+        //$xml->writeElement('CONREF', $this->conReference);
+        if(isset($this->sender) && isset($this->receiver)) {
+            $xml->startElement('addresses');
 
-            // merge packages into new document
-            $this->mergePackages($xml);
+                // merge addresses into new document
+                $this->mergeSenderAddress($xml);
+                $this->mergeReceiverAddress($xml);
 
-        $xml->endElement();
+            $xml->endElement();
+
+            $xml->startElement('dimensions');
+            $xml->writeAttribute('itemaction', 'I');
+
+            $xml->writeElementCData('itemsequenceno', '1');
+            $xml->writeElementCData('itemtype', 'C');
+            $xml->writeElementCData('weight', $this->totalWeight);
+            $xml->writeElementCData('quantity', $this->items);
+
+            $xml->endElement();
+        }
 
         // re-assigne variable
         $this->xml = $xml;
-        
+
         return parent::getAsXml();
     }
-    
+
     /**
      * Add package.
      * TNT allows for maximum 50 packages per consignment.
@@ -207,7 +249,7 @@ class Consignment extends AbstractXml
         
         return $this;
     }
-    
+
     /**
      * Mark as hazardous
      *
@@ -235,7 +277,7 @@ class Consignment extends AbstractXml
     {
         
         $this->conNumber = $number;
-        $this->xml->writeElement('CONNUMBER', $number);
+        $this->xml->writeElement('consignmentno', $number);
         
         return $this;
     }
@@ -254,6 +296,19 @@ class Consignment extends AbstractXml
         // <CONREF> is added in getAsXml() instead
         
         $this->conReference = $conReference;
+        $this->xml->writeElementCData('reference', $conReference);
+        return $this;
+    }
+
+    /**
+     * Set consignment action
+     *
+     * @param string $conAction
+     * @return Consignment
+     */
+    public function setConAction($conAction)
+    {
+        $this->conAction = $conAction;
         return $this;
     }
 
@@ -298,6 +353,21 @@ class Consignment extends AbstractXml
         
         return $this;
     }
+
+    /**
+     * Set sender address
+     *
+     * @return Address
+     */
+    public function setSender()
+    {
+        
+        if (!$this->sender instanceof Address) {
+            $this->sender = new Address("S");
+        }
+
+        return $this->sender;
+    }
     
     /**
      * Set receiver address - NOT DELIVERY ADDRESS
@@ -308,7 +378,7 @@ class Consignment extends AbstractXml
     {
         
         if (!$this->receiver instanceof Address) {
-            $this->receiver = new Address();
+            $this->receiver = new Address("R");
         }
 
         return $this->receiver;
@@ -346,17 +416,49 @@ class Consignment extends AbstractXml
 
     /**
      * Set consignment type.
-     * "N" for non document parcel, "D" for document
+     * T= La chiave viene fornita da TNT ed equivale alla Lettera di vettura; C= la chiave viene fornita dal cliente
      *
-     * @param string $contype [optional] "N" default
+     * @param string $contype [optional] "T" default
      * @return Consignment
      */
-    public function setContype($contype = 'N')
+    public function setContype($contype = 'T')
     {
-        
+
         $this->contype = $contype;
-        $this->xml->writeElementCData('CONTYPE', $contype);
-        
+        $this->xml->writeElementCData('consignmenttype', $contype);
+
+        return $this;
+    }
+
+    /**
+     * Set package type.
+     * C= Colli S= Buste B=Bauletti piccoli D= Bauletti grandi
+     *
+     * @param string $packagetype [required] "C" default
+     * @return Consignment
+     */
+    public function setPackagetype($packagetype = 'C')
+    {
+
+        $this->packagetype = $packagetype;
+        $this->xml->writeElementCData('packagetype', $packagetype);
+
+        return $this;
+    }
+
+    /**
+     * Set division
+     *
+     *
+     * @param string $division [required] "D" default
+     * @return Consignment
+     */
+    public function setDivision($division = 'D')
+    {
+
+        $this->division = $division;
+        $this->xml->writeElementCData('division', $division);
+
         return $this;
     }
 
@@ -371,7 +473,7 @@ class Consignment extends AbstractXml
     {
         
         $this->paymentind = $paymentind;
-        $this->xml->writeElementCData('PAYMENTIND', $paymentind);
+        $this->xml->writeElementCData('termsofpayment', $paymentind);
       
         return $this;
     }
@@ -386,7 +488,7 @@ class Consignment extends AbstractXml
     {
         
         $this->items = $items;
-        $this->xml->writeElementCData('ITEMS', $items);
+        $this->xml->writeElementCData('totalpackages', $items);
         
         return $this;
     }
@@ -401,7 +503,7 @@ class Consignment extends AbstractXml
     {
         
         $this->totalWeight = $totalWeight;
-        $this->xml->writeElementCData('TOTALWEIGHT', $totalWeight);
+        $this->xml->writeElementCData('actualweight', $totalWeight);
         
         return $this;
     }
@@ -414,10 +516,29 @@ class Consignment extends AbstractXml
      */
     public function setTotalVolume($totalVolume)
     {
-        
         $this->totalVolume = $totalVolume;
-        $this->xml->writeElementCData('TOTALVOLUME', $totalVolume);
-        
+        if(isset($totalVolume))
+            $this->xml->writeElementCData('actualvolume', $totalVolume);
+        else {
+            $this->xml->startElement('actualvolume');
+            $this->xml->endElement();
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set collection date
+     *
+     * @param string $collectionDate Data di affidamento a spedizione, YYYYMMDD
+     * @return Consignment
+     */
+    public function setCollectionDate($collectionDate)
+    {
+
+        $this->collectionDate = $collectionDate;
+        $this->xml->writeElementCData('collectiondate', $collectionDate);
+
         return $this;
     }
 
@@ -431,7 +552,7 @@ class Consignment extends AbstractXml
     {
         
         $this->currency = $currency;
-        $this->xml->writeElementCData('CURRENCY', $currency);
+        $this->xml->writeElementCData('codfcurrency', $currency);
         
         return $this;
     }
@@ -446,7 +567,7 @@ class Consignment extends AbstractXml
     {
         
         $this->goodsValue = $goodsValue;
-        $this->xml->writeElementCData('GOODSVALUE', $goodsValue);
+        $this->xml->writeElementCData('codfvalue', $goodsValue);
         
         return $this;
     }
@@ -492,7 +613,7 @@ class Consignment extends AbstractXml
     {
         
         $this->service = $service;
-        $this->xml->writeElementCData('SERVICE', $service);
+        $this->xml->writeElementCData('product', $service);
         
         return $this;
     }
@@ -537,7 +658,41 @@ class Consignment extends AbstractXml
         
         return $this->conReference;
     }
-    
+
+    /**
+     * Get consignment action
+     *
+     * @return string
+     */
+    public function getConAction()
+    {
+        return $this->conAction;
+    }
+
+    /**
+     * Get Goods Value
+     *
+     * @return string
+     */
+    public function getGoodsValue()
+    {
+        return $this->goodsValue;
+    }
+
+    /**
+     * Merge sender address into this document
+     *
+     * @param XMLWriter &$xml
+     * @return void
+     */
+    private function mergeSenderAddress(\XMLWriter &$xml)
+    {
+        $this->setSender(); // initialise in case when not set by user - avoid errors
+        $xml->startElement('address');
+        $xml->writeRaw($this->sender->getAsXml());
+        $xml->endElement();
+    }
+
     /**
      * Merge receiver address into this document
      *
@@ -548,7 +703,7 @@ class Consignment extends AbstractXml
     {
         
         $this->setReceiver(); // initialise in case when not set by user - avoid errors
-        $xml->startElement('RECEIVER');
+        $xml->startElement('address');
         $xml->writeRaw($this->receiver->getAsXml());
         $xml->endElement();
     }

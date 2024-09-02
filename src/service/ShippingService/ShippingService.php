@@ -18,10 +18,11 @@ class ShippingService extends AbstractService
 {
     
     /* Version */
-    const VERSION = '3.0';
+    const VERSION = '1.0';
+    const APPLICATION = 'MYRTL';
     
     /* Service URL */
-    const URL = 'https://express.tnt.com/expressconnect/shipping/ship';
+    const URL = 'https://www.mytnt.it/XMLServices';
         
     /**
      * @var string
@@ -179,15 +180,14 @@ class ShippingService extends AbstractService
      */
     public function send()
     {
-        
-        $r = $this->sendRequest();
         $x = $this->getXmlContent();
+        $r = $this->sendRequest($x);
         $u = $this->userId;
         $p = $this->password;
-                
+
         return new ActivityResponse($r, $x, $u, $p);
     }
-    
+
     /**
      * Set XML content.
      * This is useful when you want to send your own prepared XML document.
@@ -217,7 +217,6 @@ class ShippingService extends AbstractService
         
         $this->initXml();
         $this->startDocument();
-        $this->buildSenderSection();
         $this->buildConsignmentSection();
         $this->endDocument();
         
@@ -236,7 +235,7 @@ class ShippingService extends AbstractService
         $this->activity = $activity;
         return $this;
     }
-    
+
     /**
      * Build/start document
      *
@@ -244,23 +243,24 @@ class ShippingService extends AbstractService
      */
     protected function startDocument()
     {
-        
         parent::startDocument();
-        
-        $this->xml->startElement('ESHIPPER');
-        $this->xml->startElement('LOGIN');
-            $this->xml->writeElement('COMPANY', $this->userId);
-            $this->xml->writeElement('PASSWORD', $this->password);
-            $this->xml->writeElement('APPID', $this->appid);
-            $this->xml->writeElement('APPVERSION', self::VERSION);
+
+        $this->xml->startElement('shipment');
+        $this->xml->writeAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+        $this->xml->writeAttribute('xsi:noNamespaceSchemaLocation', 'W:ExpressLabel\Internazionale\routinglabel.xsd');
+        $this->xml->startElement('software');
+            $this->xml->writeElement('application', self::APPLICATION);
+            $this->xml->writeElement('version', self::VERSION);
         $this->xml->endElement();
-        $this->xml->startElement('CONSIGNMENTBATCH');
-        
-        if ($this->groupCode > 0) {
-            $this->xml->writeElement('GROUPCODE', $this->groupCode);
-        }
+        $this->xml->startElement('security');
+            $this->xml->writeElement('customer', $this->account);
+            $this->xml->writeElement('user', $this->userId);
+            $this->xml->writeElement('password', $this->password);
+            $this->xml->writeElement('langid', $this->accountCountryCode);
+        $this->xml->endElement();
+        $this->xml->writeElement('labelType', 'T');
     }
-    
+
     /**
      * Build/end document
      *
@@ -270,28 +270,11 @@ class ShippingService extends AbstractService
     {
         
         $this->xml->endElement();
-        $this->buildActivitySection();
         $this->xml->endElement();
         
         parent::endDocument();
     }
-    
-    /**
-     * Build sender section
-     *
-     * @return void
-     */
-    private function buildSenderSection()
-    {
-        
-        if ($this->sender instanceof Address) {
-            $this->xml->startElement('SENDER');
-                $this->xml->writeRaw($this->sender->getAsXml());
-                $this->buildCollectionSection();
-            $this->xml->endElement();
-        }
-    }
-    
+
     /**
      * Build collection section
      *
@@ -299,14 +282,13 @@ class ShippingService extends AbstractService
      */
     private function buildCollectionSection()
     {
-        
         if ($this->collection instanceof Collection) {
             $this->xml->startElement('COLLECTION');
                 $this->xml->writeRaw($this->collection->getAsXml());
             $this->xml->endElement();
         }
     }
-    
+
     /**
      * Build consignment section
      *
@@ -314,27 +296,26 @@ class ShippingService extends AbstractService
      */
     private function buildConsignmentSection()
     {
-        
         if (empty($this->consignments) === false) {
             foreach ($this->consignments as $consignment) {
-                $this->xml->startElement('CONSIGNMENT');
-                    $this->xml->writeRaw($consignment->getAsXml());
+                $this->xml->startElement('consignment');
+                $this->xml->writeAttribute('action', $consignment->getConAction());
+                if(null !== $consignment->getGoodsValue())
+                    $this->xml->writeAttribute('cashondelivery', 'Y');
+                /*else
+                    $this->xml->writeAttribute('cashondelivery', 'N');*/
+
+                $this->xml->writeElement('senderAccId', $this->senderAccId);
+                $this->xml->writeElement('systemcode', 'RL');
+                $this->xml->writeElement('systemversion', '1.0');
+                $this->xml->writeElement('packingdesc', 'BOX');
+                $this->xml->writeRaw($consignment->getAsXml());
+
                 $this->xml->endElement();
             }
         }
     }
-    
-    /**
-     * Build activity section
-     *
-     * @return void
-     */
-    private function buildActivitySection()
-    {
-           
-        $this->xml->writeRaw($this->getActivity()->getXmlContent(false));
-    }
-    
+
     /**
      * Get activity
      *

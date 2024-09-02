@@ -62,7 +62,7 @@ class ActivityResponse extends AbstractShippingResponse
         
         return $this->key;
     }
-    
+
     /**
      * Get activity
      *
@@ -82,14 +82,8 @@ class ActivityResponse extends AbstractShippingResponse
      */
     protected function catchConcreteResponseError()
     {
-        $complete = explode(':', $this->getResponse());
-        
-        if (isset($complete[0]) && $complete[0] === 'COMPLETE') {
-            $this->key = (int) $complete[1];
-        } else {
-            $this->validateXml();
-            $this->catchRuntimeErrors();
-            $this->catchValidationErrors();
-        }
+        $this->validateXml();
+        $this->catchRuntimeErrors();
+        $this->catchValidationErrors();
     }
 }
