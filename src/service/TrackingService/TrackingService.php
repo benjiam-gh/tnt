@@ -94,8 +94,7 @@ class TrackingService extends AbstractService
      */
     public function searchByConsignment(array $consignments)
     {
-
-        $this->xml->flush();
+        $this->initXml();
 
         $this->startDocument();
 
@@ -106,7 +105,10 @@ class TrackingService extends AbstractService
         $this->xml->endElement();
         $this->endDocument();
 
-        return new TrackingResponse($this->sendRequest(), $this->getXmlContent());
+        $x = $this->getXmlContent();
+        $r = $this->sendRequest($x);
+
+        return new TrackingResponse($r, $x);
     }
     
     /**
@@ -118,17 +120,21 @@ class TrackingService extends AbstractService
     public function searchByCustomerReference(array $references)
     {
         
-        $this->xml->flush();
+        $this->initXml();
         
         $this->startDocument();
             
         foreach ($references as $reference) {
-            $this->xml->writeElement('CustomerReference', $reference);
+            $this->xml->writeElement('AccountNo', $reference);
         }
-                
+
+        $this->xml->endElement();
         $this->endDocument();
-            
-        return new TrackingResponse($this->sendRequest(), $this->getXmlContent());
+
+        $x = $this->getXmlContent();
+        $r = $this->sendRequest($x);
+
+        return new TrackingResponse($r, $x);
     }
 
     /**
@@ -144,7 +150,7 @@ class TrackingService extends AbstractService
     public function searchByDate($dateFrom, $dateTo = null, $days = 3)
     {
         
-        $this->xml->flush();
+        $this->initXml();
         
         $this->dateFrom = $dateFrom;
         $this->dateTo   = $dateTo;
@@ -230,10 +236,10 @@ class TrackingService extends AbstractService
      *
      * @return string Returns TNT Response string as XML
      */
-    protected function sendRequest()
+    protected function sendRequest($xmlContent)
     {
         
-        $this->setResponse();
+        $this->setResponse($xmlContent);
         
         return XMLTools::mergeXml($this->outputs);
     }
@@ -244,18 +250,18 @@ class TrackingService extends AbstractService
      *
      * @return array Returns TNT Responses string as XML
      */
-    protected function setResponse()
+    protected function setResponse($xmlContent)
     {
         
         // Tracking service might contain <ContinuationKey> element
         // which works like a pagination
         // We have to loop request until this key exists in the response
-        $response = parent::sendRequest();
+        $response = parent::sendRequest($xmlContent);
            
         $this->outputs[] = $response;
         
         if ($this->continueRequest($response) === true) {
-            $this->setResponse();
+            $this->setResponse($xmlContent);
         }
     }
     
