@@ -13,6 +13,12 @@ This package supports following services:
 
 This package is an unofficial PHP client for myTNT Italy Express Connect APIs.
 
+## Installing
+Install with composer
+```shell
+composer require dinja/mytnt-express-connect-italy
+```
+
 ## Usage
 ### Shipping
 
