@@ -1,14 +1,13 @@
 {
-    "name": "200mph/tnt-express-connect",
+    "name": "benjiam/mytnt-express-connect-italy",
     "type": "library",
-    "description": "TNT ExpressConnect (API) client",
-    "keywords": ["tnt", "tnt express connect", "tnt tracking", "tnt shipping"],
+    "description": "myTNT Italy Express Connect (API) client",
+    "keywords": ["tnt", "tnt express connect", "tnt tracking", "tnt shipping", "mytnt"],
     "license": "MIT",
-    "homepage": "https://github.com/200MPH/tnt-ec",
     "authors": [
         {
-            "name": "Wojciech Brozyna",
-            "email": "wojciech.brozyna@gmail.com"
+            "name": "Beniamino Carriero",
+            "email": "beniamino.carriero@dinja.it"
         }
     ],
     "require": {
