@@ -1,5 +1,5 @@
 {
-    "name": "benjiam/mytnt-express-connect-italy",
+    "name": "dinja/mytnt-express-connect-italy",
     "type": "library",
     "description": "myTNT Italy Express Connect (API) client",
     "keywords": ["tnt", "tnt express connect", "tnt tracking", "tnt shipping", "mytnt"],
