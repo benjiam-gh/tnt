@@ -19,6 +19,7 @@ class TrackingService extends AbstractService
     
     /* Version */
     const VERSION = '3.0';
+    const APPLICATION = 'MYTRA';
     
     /* Service URL */
     const URL = 'https://www.mytnt.it/XMLServices';
@@ -103,6 +104,14 @@ class TrackingService extends AbstractService
         }
 
         $this->xml->endElement();
+
+        $this->xml->startElement('SearchParameters');
+        $this->xml->writeElement('SearchType', 'Detail');
+        $this->xml->writeElement('SearchOption', 'ConsignmentTracking');
+        $this->xml->writeElement('SearchKeyValue', );
+        $this->xml->writeElement('SearchMethod', );
+        $this->xml->endElement();
+
         $this->endDocument();
 
         $x = $this->getXmlContent();
@@ -206,7 +215,7 @@ class TrackingService extends AbstractService
         parent::startDocument();
 
         $this->xml->startElement('Document');
-        $this->xml->startElement("Application");
+        $this->xml->writeElement('Application', self::APPLICATION);
         $this->xml->writeElement('Version', self::VERSION);
         $this->xml->startElement('Login');
             $this->xml->writeElement('Customer', $this->account);
@@ -225,7 +234,6 @@ class TrackingService extends AbstractService
      */
     protected function endDocument()
     {
-        $this->xml->endElement();
         $this->xml->endElement();
 
         parent::endDocument();
