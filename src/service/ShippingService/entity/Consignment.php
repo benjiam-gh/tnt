@@ -110,6 +110,11 @@ class Consignment extends AbstractXml
      * @var float
      */
     private $goodsValue = null;
+
+    /**
+     * @var string
+     */
+    private $goodsDesc;
     
     /**
      * @var float
@@ -573,6 +578,21 @@ class Consignment extends AbstractXml
     }
 
     /**
+     * Set goods desc
+     *
+     * @param string $goodsDesc
+     * @return Consignment
+     */
+    public function setGoodsDesc($goodsDesc)
+    {
+        
+        $this->goodsDesc = $goodsDesc;
+        $this->xml->writeElementCData('goodsdesc', $goodsDesc);
+        
+        return $this;
+    }
+
+    /**
      * Set insurance value
      *
      * @param float $insuranceValue
@@ -677,6 +697,16 @@ class Consignment extends AbstractXml
     public function getGoodsValue()
     {
         return $this->goodsValue;
+    }
+
+    /**
+     * Get Goods Desc
+     *
+     * @return string
+     */
+    public function getGoodsDesc()
+    {
+        return $this->goodsDesc;
     }
 
     /**
