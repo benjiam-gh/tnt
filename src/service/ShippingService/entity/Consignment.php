@@ -663,7 +663,7 @@ class Consignment extends AbstractXml
     {
                 
         $this->deliveryInstructions = $deliveryInstructions;
-        $this->xml->writeElementCData('DELIVERYINST', $deliveryInstructions);
+        $this->xml->writeElementCData('specialinstructions', $deliveryInstructions);
         
         return $this;
     }
